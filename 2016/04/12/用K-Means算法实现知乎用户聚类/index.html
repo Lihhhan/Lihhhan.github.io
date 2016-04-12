@@ -4,17 +4,23 @@
   <meta charset="utf-8">
   
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <title>lihan.io</title>
+  <title>用K-Means算法实现知乎用户聚类 | lihan.io</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description">
-<meta property="og:type" content="website">
-<meta property="og:title" content="lihan.io">
-<meta property="og:url" content="http://yoursite.com/index.html">
+  <meta name="description" content="最近看到利用blog关键字做用户分类的事情，感觉挺神奇的，就用python写了一个基于知乎用户回答内容的用户聚类的小脚本。
+主要的流程就是先用爬虫爬取用户回答数据，然后从用户回答中提取关键字，这个关键字分词用的是python的jieba分词库[1]，分词的效率和准确度还可以接受。然后结合一个回答的点赞数，关键字在这个回答的权重以及关键字在不同回答中出现的次数来计算关键字在用户维度的权重，最后得到一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用K-Means算法实现知乎用户聚类">
+<meta property="og:url" content="http://yoursite.com/2016/04/12/用K-Means算法实现知乎用户聚类/index.html">
 <meta property="og:site_name" content="lihan.io">
-<meta property="og:description">
+<meta property="og:description" content="最近看到利用blog关键字做用户分类的事情，感觉挺神奇的，就用python写了一个基于知乎用户回答内容的用户聚类的小脚本。
+主要的流程就是先用爬虫爬取用户回答数据，然后从用户回答中提取关键字，这个关键字分词用的是python的jieba分词库[1]，分词的效率和准确度还可以接受。然后结合一个回答的点赞数，关键字在这个回答的权重以及关键字在不同回答中出现的次数来计算关键字在用户维度的权重，最后得到一">
+<meta property="og:image" content="http://yoursite.com/img/1_1.jpg">
+<meta property="og:updated_time" content="2016-04-12T11:24:05.441Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="lihan.io">
-<meta name="twitter:description">
+<meta name="twitter:title" content="用K-Means算法实现知乎用户聚类">
+<meta name="twitter:description" content="最近看到利用blog关键字做用户分类的事情，感觉挺神奇的，就用python写了一个基于知乎用户回答内容的用户聚类的小脚本。
+主要的流程就是先用爬虫爬取用户回答数据，然后从用户回答中提取关键字，这个关键字分词用的是python的jieba分词库[1]，分词的效率和准确度还可以接受。然后结合一个回答的点赞数，关键字在这个回答的权重以及关键字在不同回答中出现的次数来计算关键字在用户维度的权重，最后得到一">
+<meta name="twitter:image" content="http://yoursite.com/img/1_1.jpg">
   
     <link rel="alternative" href="/atom.xml" title="lihan.io" type="application/atom+xml">
   
@@ -175,9 +181,7 @@
 	</div>
 </nav>
 
-      <div class="body-wrap">
-  
-    <article id="post-用K-Means算法实现知乎用户聚类" class="article article-type-post" itemscope itemprop="blogPost">
+      <div class="body-wrap"><article id="post-用K-Means算法实现知乎用户聚类" class="article article-type-post" itemscope itemprop="blogPost">
   
     <div class="article-meta">
       <a href="/2016/04/12/用K-Means算法实现知乎用户聚类/" class="article-date">
@@ -193,12 +197,23 @@
       <header class="article-header">
         
   
-    <h1 itemprop="name">
-      <a class="article-title" href="/2016/04/12/用K-Means算法实现知乎用户聚类/">用K-Means算法实现知乎用户聚类</a>
+    <h1 class="article-title" itemprop="name">
+      用K-Means算法实现知乎用户聚类
     </h1>
   
 
       </header>
+      
+      <div class="article-info article-info-post">
+        
+	<div class="article-tag tagcloud">
+		<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/机器学习/">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/爬虫/">爬虫</a></li></ul>
+	</div>
+
+        
+
+        <div class="clearfix"></div>
+      </div>
       
     
     <div class="article-entry" itemprop="articleBody">
@@ -237,20 +252,9 @@
       
     </div>
     
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/机器学习/">机器学习</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/爬虫/">爬虫</a></li></ul>
-	</div>
-
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-    
   </div>
+  
+    
   
 </article>
 
@@ -261,9 +265,6 @@
 
 
 
-
-  
-  
 </div>
       <footer id="footer">
   <div class="outer">
@@ -287,8 +288,8 @@
 		fancybox: true,
 		mathjax: true,
 		animate: true,
-		isHome: true,
-		isPost: false,
+		isHome: false,
+		isPost: true,
 		isArchive: false,
 		isTag: false,
 		isCategory: false,
