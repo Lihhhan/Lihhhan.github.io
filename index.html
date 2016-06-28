@@ -91,6 +91,8 @@
 				        
 							<li><a href="/tags/机器学习/">机器学习</a></li>
 				        
+							<li><a href="/tags/图像处理/">图像处理</a></li>
+				        
 						</ul>
 					</nav>
 					<nav class="header-nav">
@@ -109,7 +111,7 @@
 				
 				<section class="switch-part switch-part2">
 					<div class="widget tagcloud" id="js-tagcloud">
-						<a href="/tags/机器学习/" style="font-size: 10px;">机器学习</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a>
+						<a href="/tags/图像处理/" style="font-size: 10px;">图像处理</a> <a href="/tags/天气分类/" style="font-size: 10px;">天气分类</a> <a href="/tags/机器学习/" style="font-size: 20px;">机器学习</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a>
 					</div>
 				</section>
 				
@@ -157,6 +159,8 @@
 		        
 					<li><a href="/tags/机器学习/">机器学习</a></li>
 		        
+					<li><a href="/tags/图像处理/">图像处理</a></li>
+		        
 		        <div class="clearfix"></div>
 				</ul>
 			</nav>
@@ -176,6 +180,84 @@
 </nav>
 
       <div class="body-wrap">
+  
+    <article id="post-《Two-Class-Weather-Classification》阅读笔记" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/06/28/《Two-Class-Weather-Classification》阅读笔记/" class="article-date">
+  	<time datetime="2016-06-28T03:30:03.000Z" itemprop="datePublished">2016-06-28</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2016/06/28/《Two-Class-Weather-Classification》阅读笔记/">《Two-Class Weather Classification》阅读笔记</a>
+    </h1>
+  
+
+      </header>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=default"></script>
+
+<p>《Two-Class Weather Classification》[0]是我最近学习的一篇关于两种天气分类的一篇文章，提出了一种新的针对sunny-cloudy两种天气进行分类的方法。背景就不多说了，我会结合特征提取和分类器的构造两方面来简单说一下我对这篇文章的理解。</p>
+<h2 id="特征提取"><a href="#特征提取" class="headerlink" title="特征提取"></a>特征提取</h2><p>这篇文章针对晴天以及多云的天气主要通过天空，阴影，反射，对比度还有雾霾五种特征来进行分类。对于每张图片，会针对这五个方面构建出一个621维的特征向量\( [ f_{sk} , f_{sh} , f_{re} , f_{co} , f_{ha} ]^T \)，还有一个四维的存在性向量\( [ v_{sk}, v_{sh}, v_{re}, v_{ha}]^T \)（这个存在性向量是用来权衡获得的相应特征对于天气判断的可信度的一个参数）。然后利用这些特征信息进行分类，关于如何利用这些分类信息进行分类，我会在分类器的构造这一块来进行解释。</p>
+<ul>
+<li>天空<br>天空的情况对于户外天气的判断是一个十分重要的依据。天空特征\(f_{sk}\)是一个256维的特征向量，并且天空特征为四维的存在性向量提供了一维\(v_{sk}\).\(f_{sk}\)的计算是通过从原始图像中抠取天空区域得到的，首先从原始图像中抠取天空区域，然后将非天空区域的像素值置为0，然后对这个处理后的图像计算像素值直方图。0-255的像素值，可以获得一个256维的像素值直方图向量，就把这个向量作为天空特征\(f_sk\), 设天空区域占整个图片中的比例为A，\(v_{sk} = min\{2A,1\}\),关于如何将天空区域从图像中分离出来，文章中是采用了20000个大小为15*15的小块，然后分别计算他们128维的SIFT描述子的特征和3维的HSV颜色空间的像素值，获得一个131维的特征然后用随机森林分类器进行训练然后分类的。作者提供了抠取天空区域这部分工作的代码，网上应该也能找到这方面的工作的代码。</li>
+<li>阴影<br>阴影是指在阳光比较强烈的晴天户外照片中才会出现比较明显的影子的特征。和天空特征类似的，需要先在原始图像中把阴影部分检测出来，阴影检测比较复杂，图像中本身就存在的黑色区域往往会被误识别。文章没有提供具体的方法，但是对于阴影检测使用了一个阴影检测工具[1]。由于存在一部分误识别的阴影区域，文章只对检测出来的可信度（这个可信度的计算文章中没有提，应该是检测工具结果里面会返回的一个量）最高的十个区域进行处理，用K-nearest算法分别计算出每个阴影区域在阴影样本集P（这个P是样本集中每个样本中可信度最高的10个阴影区域构成的一个阴影集）上的五个最近邻样本区域，然后这个阴影区域和它的五个最近邻的欧式距离的和，原始图像获得10个可信度最高的阴影区域，计算出10个欧式距离作为一个10维的特征向量\(f_{sh}\),十个可信度最高的阴影区域中最高的那个可信度就是\(v_{sh}\) 。</li>
+<li>反射<br>反射是指，强烈的阳光照射在物体上，会在其表面产生白色的反射区域，这种白色区域有中间亮度比较大，边缘亮度小的特点，它把这种反射看做是以物体本身作为背景的图像上做一个白色前景蒙层（也就是alpha matte），也就是说中间前景占比高，随着离中心距离的增大四周的比例逐渐降低。反射特征是通过抠图来找白色反射区域，然后把距离白色区域一定距离的区域划一个曲线，计算曲线内包围像素点的alpha matte的直方图，构造100维的反射特征\(f_{re}\), 如果存在这样的反射则\(v_{re}=1\),反之为0。</li>
+<li>对比度<br>这个特征比较容易理解，晴天图像的对比度比较高，色彩饱和度也比较高，其实就是计算出原始图片在HSV颜色空间的色彩饱和度20维的直方图\(P\), 对比度特征\(f_{co}=[ p_{i}/p_{j}, i>j\,\&\&\,p_{i},p_{j}\in P]\)，因为\(p\)是一个20维的向量，\(i,j\in [0-19]\),很容易得到\(f_{co}\)是一个171维的向量,其中由于每个图片都具有对比度,也就是这个值都是可信的，所以可信度向量中没有\(v_{co}\)。</li>
+<li>雾霾<br>雾霾利用了暗通道先验原理[2]，首先计算出原始图片的暗通道图，然后把暗通道图resize成512<em>512的正方形图，并将其分别切块成2</em>2,4<em>4,8</em>8的84个小正方形块，分别计算每个暗通道小块的像素值的中位数，一共是84个中位数，构成一个84维的特征向量\(f_{ha}\),原始图片的暗通道图的中位数就是\(v_{ha}\)。</li>
+</ul>
+<p>至此我们得到了一个621维的特征向量，还有一个4维的可信度向量。下一步就是根据这些天气特征进行分类。</p>
+<h1 id="分类器构造"><a href="#分类器构造" class="headerlink" title="分类器构造"></a>分类器构造</h1><p>由于不是每个图像都包含上述五种天气特征，譬如一副晴天的近景图片没有拍摄到天空,拍摄远处的山脉没有倒影等等，所以不是每种特征都具有所有的可信度，之前我们计算得到了一个四维的可信度向量\( [ v_{sk}, v_{sh}, v_{re}, v_{ha}]^T \),每种特征都可能在图片中存在，也可能不存在，4个特征一共有\(2^4=16\)种可能的图片类型，我们对我们的训练样本利用存在性向量进行聚类，聚类中心有16个，最后得到的结果我们可以理解为，每个聚类存在的特征都是同质的，譬如说第一类是只有天空和阴影特征，第二类只有阴影和反射特征，第三类有所有特征等等。<br>如果顺着传统的思维做下去，我们现在得到了16个子训练集，现在可以对每个子训练集单独进行训练，当拿到一张待分类图片之后，每个子训练集都可以给出一个分类结果，我们只要综合一下这些结果，例如子训练集中心和待分类图片可信度向量越接近的占的权重越高等等，最后给出一个总的结果就行了。$$ h(x,e) = sign[\sum_{i=1}^{M}s(\hat e_{i}, e)\hat h_{i}(x)] \tag{1}$$ 这个公式就是对于上述思想的公式表达,\(x\)和\(e\)分别是621维的特征向量和4维的可信度向量，\(\hat e_{i}\)就是第i个子训练集的聚类中心，\(M\)是聚类的个数，这里是16,\(s\)是一个计算相似度的函数，$$ s(\hat e_i, e)= \frac{exp(-\frac {||\hat e_i-e||_2^2}{2\sigma^2})}{\sum_i^Mexp(-\frac{||\hat e_i-e||_2^2}{2\sigma^2})} \tag{2}$$\(\hat h_i\)表示第i个子训练集的分类结果,结果由1和-1来表示，1为晴天，-1为多云，\(e\)和\(\hat e_i\)的相似度越高\(s\)的值越大，该子训练集给总的预测结果中提供的权重就越大，最后判断这个加权后的所有子训练集给出的结果的正负性来给出总的预测结果。这里的\(\hat h_i(x)\)如果使用最简单的二值分类的svm的分类器[3]的话，就有这样的计算公式：$$\hat h_i(x) = sign(\omega_ix+b_i) \tag{3}$$构建这个分类器也就是计算最大分离面，也就是求这个最小化问题，$$min(\omega^2 + C*\zeta_{i,k})  $$ $$\qquad s.t.\,y_i(\omega_ix+b_i)\geq 1-\zeta_i\tag{4}$$但是文章没用这种方法，它采用了一种各个聚类协作的分类模型，也就是说，各个聚类的分类结果不会因为总的输出结果而改变，所以说\(\hat h_i(x)\)的结果是独立于\(h(x,e)\)的,这样就可以把(3)式代入到(1)中，得到一个共同的预测模型：$$h(x,e) = sign[\sum_{i=1}^{M}s(\hat e_{i}, e)(\omega_ix+b_i)] \tag{5}$$求解这个最优分离平面\(\omega_i\)就是求解这个变形的最小化问题：$$min(\sum_{i=1}^M\omega_i^2+C_1\sum_{i=1}^M\zeta_i+C_2\sum_{t=1}^N\xi_t) $$  $$\qquad s.t. \, yt[\sum^M_is(\hat e_i,e_t)(\omega_ix_t+b_i)]\geq1-\xi_t \tag{6}$$ 这个N指的是训练集的数量,这个最小化问题可以用朗格拉日乘子法计算。这是个类似于SVM的分类模型，这种分类的模型解决了样本集中某些特征不存在，又需要用这些特征进行分类的问题，但是这个模型最大的问题就是只能分类两种天气，因为结果只有-1和+1两种，才可以采用这种各个子类加权，然后再汇总的方法。</p>
+<blockquote>
+<p>参考</p>
+<ol>
+<li>Cewu Lu, Di Lin, Jiaya Jia, Chi-Keung Tang. Two-class Weather Classification.In CVPR, 2015.</li>
+<li>J.-F. Lalonde, A. Efros, and S. Narasimhan. Detecting ground shadows in outdoor consumer photographs. In ECCV, 2010.</li>
+<li><a href="http://blog.csdn.net/zrjust1043/article/details/42965475" target="_blank" rel="external">暗通道先验原理介绍</a>  </li>
+<li><a href="http://www.cnblogs.com/LeftNotEasy/archive/2011/05/02/basic-of-svm.html" target="_blank" rel="external">svm基础</a></li>
+</ol>
+</blockquote>
+
+      
+    </div>
+    
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/图像处理/">图像处理</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/天气分类/">天气分类</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/机器学习/">机器学习</a></li></ul>
+	</div>
+
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+    
+  </div>
+  
+</article>
+
+
+
+
+
+
+
+
+
   
     <article id="post-用K-Means算法实现知乎用户聚类" class="article article-type-post" itemscope itemprop="blogPost">
   
@@ -206,7 +288,7 @@
         <p>最近看到利用blog关键字做用户分类的事情，感觉挺神奇的，就用python写了一个基于知乎用户回答内容的用户聚类的小脚本。</p>
 <p>主要的流程就是先用爬虫爬取用户回答数据，然后从用户回答中提取关键字，这个关键字分词用的是python的jieba分词库[1]，分词的效率和准确度还可以接受。然后结合一个回答的点赞数，关键字在这个回答的权重以及关键字在不同回答中出现的次数来计算关键字在用户维度的权重，最后得到一个用户/关键字的权重二维矩阵，矩阵的每一行代表,一个用户在不同关键字下的权重的行向量，然后利用Pearson Correlation Score来计算用户相似性，最后用K-Means算法来进行用户聚类。</p>
 <p>首先说下爬虫，爬虫唯一麻烦的是登陆，知乎浏览问题是要登陆的，这是登陆知乎的代码</p>
-<pre><code><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">login</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="string">"cookie init"</span></span><br><span class="line">    cookies = cookielib.CookieJar()</span><br><span class="line">    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies))</span><br><span class="line">    urllib2.install_opener(opener)</span><br><span class="line">    c =  urllib2.urlopen(<span class="string">'http://www.zhihu.com'</span>)</span><br><span class="line">  </span><br><span class="line">    <span class="string">"login"</span> </span><br><span class="line">    form =  &#123;&#125; </span><br><span class="line">    <span class="keyword">for</span> cookie <span class="keyword">in</span> cookies:</span><br><span class="line">        <span class="keyword">if</span> cookie.name == <span class="string">'_xsrf'</span> :</span><br><span class="line">        form[<span class="string">'_xsrf'</span>] = cookie.value</span><br><span class="line">    form[<span class="string">'password'</span>] = <span class="string">''</span></span><br><span class="line">    form[<span class="string">'email'</span>] = <span class="string">'136081054@qq.com'</span></span><br><span class="line">    form[<span class="string">'remember_me'</span>] = <span class="keyword">False</span></span><br><span class="line">  </span><br><span class="line">    post_data=urllib.urlencode(form)</span><br><span class="line">    headers =&#123;<span class="string">"User-agent"</span>:<span class="string">"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1"</span>&#125;</span><br><span class="line">    req=urllib2.Request(<span class="string">'https://www.zhihu.com/login/email'</span>,post_data,headers)</span><br><span class="line">    content=json.load(opener.open(req))</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> content[<span class="string">'r'</span>] == <span class="number">0</span> :</span><br><span class="line">        <span class="keyword">print</span> content[<span class="string">'msg'</span>]</span><br><span class="line">    <span class="keyword">else</span>:  </span><br><span class="line">        <span class="keyword">if</span> data <span class="keyword">in</span> content: </span><br><span class="line">            <span class="keyword">print</span> content[<span class="string">'data'</span>]</span><br><span class="line">            exit()</span><br></pre></td></tr></table></figure>
+<pre><code><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">login</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="comment">#cookie init</span></span><br><span class="line">    cookies = cookielib.CookieJar()</span><br><span class="line">    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies))</span><br><span class="line">    urllib2.install_opener(opener)</span><br><span class="line">    c =  urllib2.urlopen(<span class="string">'http://www.zhihu.com'</span>)</span><br><span class="line">  </span><br><span class="line">    <span class="comment">#login</span></span><br><span class="line">    form =  &#123;&#125; </span><br><span class="line">    <span class="keyword">for</span> cookie <span class="keyword">in</span> cookies:</span><br><span class="line">        <span class="keyword">if</span> cookie.name == <span class="string">'_xsrf'</span> :</span><br><span class="line">        form[<span class="string">'_xsrf'</span>] = cookie.value</span><br><span class="line">    form[<span class="string">'password'</span>] = <span class="string">''</span></span><br><span class="line">    form[<span class="string">'email'</span>] = <span class="string">'136081054@qq.com'</span></span><br><span class="line">    form[<span class="string">'remember_me'</span>] = <span class="keyword">False</span></span><br><span class="line">  </span><br><span class="line">    post_data=urllib.urlencode(form)</span><br><span class="line">    headers =&#123;<span class="string">"User-agent"</span>:<span class="string">"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1"</span>&#125;</span><br><span class="line">    req=urllib2.Request(<span class="string">'https://www.zhihu.com/login/email'</span>,post_data,headers)</span><br><span class="line">    content=json.load(opener.open(req))</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> content[<span class="string">'r'</span>] == <span class="number">0</span> :</span><br><span class="line">        <span class="keyword">print</span> content[<span class="string">'msg'</span>]</span><br><span class="line">    <span class="keyword">else</span>:  </span><br><span class="line">        <span class="keyword">if</span> data <span class="keyword">in</span> content: </span><br><span class="line">            <span class="keyword">print</span> content[<span class="string">'data'</span>]</span><br><span class="line">            exit()</span><br></pre></td></tr></table></figure>
 </code></pre><p><br></p>
 <p>知乎登陆的form里面有一个<code>_xsrf</code>字段，是防止xsrf攻击的，这个字段是在你请求www.zhihu.com的时候写到你cookie里面的，所以要先发一个到首页的请求拿到cookie里面的<code>_xsrf</code>值填充到form里面，然后拿到登陆的cookie。还有就是header里面的UA要伪造一个，否则会爬不到数据。</p>
 <p>然后就是爬取用户回答的数据，我找了50个关注人数在1W以上或者是兴趣特征比较明显（例如回答主要集中在健身，历史）的用户进行的实验。解析页面用的是轻量级的BeautifulSoup库[2]，比较简单，容易上手。对于每个回答，只爬取了它的点赞数以及问题和回答的内容，因为发现有一些用户的回答是灌水的，也没有几个赞，所以根据点赞数不同，回答会占不同的权重，我在这里采用的是对点赞数开根号作为系数k来增加高赞回答的权重的。回答内容的分词用的是jieba库，它的基于TextRank算法的关键词抽取功能可以找出回答的关键字并且返回关键字的权重x，x*k就是一个回答中一个关键字的权重，用户所有回答中的x*k累加起来就是用户对这个关键字的权重，至此用户对于不同关键字的权重可以表示为行向量v，v中的第i项就是这个用户对第i个关键字的权重。下面是计算v的代码，其中wordcount就是该用户”<em>关键字——权重</em>“的一个dict.</p>

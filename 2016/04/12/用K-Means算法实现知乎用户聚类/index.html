@@ -15,7 +15,7 @@
 <meta property="og:description" content="最近看到利用blog关键字做用户分类的事情，感觉挺神奇的，就用python写了一个基于知乎用户回答内容的用户聚类的小脚本。
 主要的流程就是先用爬虫爬取用户回答数据，然后从用户回答中提取关键字，这个关键字分词用的是python的jieba分词库[1]，分词的效率和准确度还可以接受。然后结合一个回答的点赞数，关键字在这个回答的权重以及关键字在不同回答中出现的次数来计算关键字在用户维度的权重，最后得到一">
 <meta property="og:image" content="http://yoursite.com/img/1_1.jpg">
-<meta property="og:updated_time" content="2016-04-12T11:24:05.441Z">
+<meta property="og:updated_time" content="2016-04-17T04:11:23.565Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="用K-Means算法实现知乎用户聚类">
 <meta name="twitter:description" content="最近看到利用blog关键字做用户分类的事情，感觉挺神奇的，就用python写了一个基于知乎用户回答内容的用户聚类的小脚本。
@@ -97,6 +97,8 @@
 				        
 							<li><a href="/tags/机器学习/">机器学习</a></li>
 				        
+							<li><a href="/tags/图像处理/">图像处理</a></li>
+				        
 						</ul>
 					</nav>
 					<nav class="header-nav">
@@ -115,7 +117,7 @@
 				
 				<section class="switch-part switch-part2">
 					<div class="widget tagcloud" id="js-tagcloud">
-						<a href="/tags/机器学习/" style="font-size: 10px;">机器学习</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a>
+						<a href="/tags/图像处理/" style="font-size: 10px;">图像处理</a> <a href="/tags/天气分类/" style="font-size: 10px;">天气分类</a> <a href="/tags/机器学习/" style="font-size: 20px;">机器学习</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a>
 					</div>
 				</section>
 				
@@ -162,6 +164,8 @@
 					<li><a href="/tags/爬虫/">爬虫</a></li>
 		        
 					<li><a href="/tags/机器学习/">机器学习</a></li>
+		        
+					<li><a href="/tags/图像处理/">图像处理</a></li>
 		        
 		        <div class="clearfix"></div>
 				</ul>
@@ -221,7 +225,7 @@
         <p>最近看到利用blog关键字做用户分类的事情，感觉挺神奇的，就用python写了一个基于知乎用户回答内容的用户聚类的小脚本。</p>
 <p>主要的流程就是先用爬虫爬取用户回答数据，然后从用户回答中提取关键字，这个关键字分词用的是python的jieba分词库[1]，分词的效率和准确度还可以接受。然后结合一个回答的点赞数，关键字在这个回答的权重以及关键字在不同回答中出现的次数来计算关键字在用户维度的权重，最后得到一个用户/关键字的权重二维矩阵，矩阵的每一行代表,一个用户在不同关键字下的权重的行向量，然后利用Pearson Correlation Score来计算用户相似性，最后用K-Means算法来进行用户聚类。</p>
 <p>首先说下爬虫，爬虫唯一麻烦的是登陆，知乎浏览问题是要登陆的，这是登陆知乎的代码</p>
-<pre><code><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">login</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="string">"cookie init"</span></span><br><span class="line">    cookies = cookielib.CookieJar()</span><br><span class="line">    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies))</span><br><span class="line">    urllib2.install_opener(opener)</span><br><span class="line">    c =  urllib2.urlopen(<span class="string">'http://www.zhihu.com'</span>)</span><br><span class="line">  </span><br><span class="line">    <span class="string">"login"</span> </span><br><span class="line">    form =  &#123;&#125; </span><br><span class="line">    <span class="keyword">for</span> cookie <span class="keyword">in</span> cookies:</span><br><span class="line">        <span class="keyword">if</span> cookie.name == <span class="string">'_xsrf'</span> :</span><br><span class="line">        form[<span class="string">'_xsrf'</span>] = cookie.value</span><br><span class="line">    form[<span class="string">'password'</span>] = <span class="string">''</span></span><br><span class="line">    form[<span class="string">'email'</span>] = <span class="string">'136081054@qq.com'</span></span><br><span class="line">    form[<span class="string">'remember_me'</span>] = <span class="keyword">False</span></span><br><span class="line">  </span><br><span class="line">    post_data=urllib.urlencode(form)</span><br><span class="line">    headers =&#123;<span class="string">"User-agent"</span>:<span class="string">"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1"</span>&#125;</span><br><span class="line">    req=urllib2.Request(<span class="string">'https://www.zhihu.com/login/email'</span>,post_data,headers)</span><br><span class="line">    content=json.load(opener.open(req))</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> content[<span class="string">'r'</span>] == <span class="number">0</span> :</span><br><span class="line">        <span class="keyword">print</span> content[<span class="string">'msg'</span>]</span><br><span class="line">    <span class="keyword">else</span>:  </span><br><span class="line">        <span class="keyword">if</span> data <span class="keyword">in</span> content: </span><br><span class="line">            <span class="keyword">print</span> content[<span class="string">'data'</span>]</span><br><span class="line">            exit()</span><br></pre></td></tr></table></figure>
+<pre><code><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">login</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="comment">#cookie init</span></span><br><span class="line">    cookies = cookielib.CookieJar()</span><br><span class="line">    opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookies))</span><br><span class="line">    urllib2.install_opener(opener)</span><br><span class="line">    c =  urllib2.urlopen(<span class="string">'http://www.zhihu.com'</span>)</span><br><span class="line">  </span><br><span class="line">    <span class="comment">#login</span></span><br><span class="line">    form =  &#123;&#125; </span><br><span class="line">    <span class="keyword">for</span> cookie <span class="keyword">in</span> cookies:</span><br><span class="line">        <span class="keyword">if</span> cookie.name == <span class="string">'_xsrf'</span> :</span><br><span class="line">        form[<span class="string">'_xsrf'</span>] = cookie.value</span><br><span class="line">    form[<span class="string">'password'</span>] = <span class="string">''</span></span><br><span class="line">    form[<span class="string">'email'</span>] = <span class="string">'136081054@qq.com'</span></span><br><span class="line">    form[<span class="string">'remember_me'</span>] = <span class="keyword">False</span></span><br><span class="line">  </span><br><span class="line">    post_data=urllib.urlencode(form)</span><br><span class="line">    headers =&#123;<span class="string">"User-agent"</span>:<span class="string">"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1"</span>&#125;</span><br><span class="line">    req=urllib2.Request(<span class="string">'https://www.zhihu.com/login/email'</span>,post_data,headers)</span><br><span class="line">    content=json.load(opener.open(req))</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span> content[<span class="string">'r'</span>] == <span class="number">0</span> :</span><br><span class="line">        <span class="keyword">print</span> content[<span class="string">'msg'</span>]</span><br><span class="line">    <span class="keyword">else</span>:  </span><br><span class="line">        <span class="keyword">if</span> data <span class="keyword">in</span> content: </span><br><span class="line">            <span class="keyword">print</span> content[<span class="string">'data'</span>]</span><br><span class="line">            exit()</span><br></pre></td></tr></table></figure>
 </code></pre><p><br></p>
 <p>知乎登陆的form里面有一个<code>_xsrf</code>字段，是防止xsrf攻击的，这个字段是在你请求www.zhihu.com的时候写到你cookie里面的，所以要先发一个到首页的请求拿到cookie里面的<code>_xsrf</code>值填充到form里面，然后拿到登陆的cookie。还有就是header里面的UA要伪造一个，否则会爬不到数据。</p>
 <p>然后就是爬取用户回答的数据，我找了50个关注人数在1W以上或者是兴趣特征比较明显（例如回答主要集中在健身，历史）的用户进行的实验。解析页面用的是轻量级的BeautifulSoup库[2]，比较简单，容易上手。对于每个回答，只爬取了它的点赞数以及问题和回答的内容，因为发现有一些用户的回答是灌水的，也没有几个赞，所以根据点赞数不同，回答会占不同的权重，我在这里采用的是对点赞数开根号作为系数k来增加高赞回答的权重的。回答内容的分词用的是jieba库，它的基于TextRank算法的关键词抽取功能可以找出回答的关键字并且返回关键字的权重x，x*k就是一个回答中一个关键字的权重，用户所有回答中的x*k累加起来就是用户对这个关键字的权重，至此用户对于不同关键字的权重可以表示为行向量v，v中的第i项就是这个用户对第i个关键字的权重。下面是计算v的代码，其中wordcount就是该用户”<em>关键字——权重</em>“的一个dict.</p>
@@ -255,6 +259,20 @@
   </div>
   
     
+<nav id="article-nav">
+  
+    <a href="/2016/06/28/《Two-Class-Weather-Classification》阅读笔记/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption"><</strong>
+      <div class="article-nav-title">
+        
+          《Two-Class Weather Classification》阅读笔记
+        
+      </div>
+    </a>
+  
+  
+</nav>
+
   
 </article>
 
