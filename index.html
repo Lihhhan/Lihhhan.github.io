@@ -111,7 +111,7 @@
 				
 				<section class="switch-part switch-part2">
 					<div class="widget tagcloud" id="js-tagcloud">
-						<a href="/tags/图像处理/" style="font-size: 15px;">图像处理</a> <a href="/tags/天气分类/" style="font-size: 10px;">天气分类</a> <a href="/tags/机器学习/" style="font-size: 20px;">机器学习</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a>
+						<a href="/tags/图像处理/" style="font-size: 15px;">图像处理</a> <a href="/tags/天气分类/" style="font-size: 10px;">天气分类</a> <a href="/tags/数值分析/" style="font-size: 10px;">数值分析</a> <a href="/tags/机器学习/" style="font-size: 20px;">机器学习</a> <a href="/tags/爬虫/" style="font-size: 10px;">爬虫</a>
 					</div>
 				</section>
 				
@@ -181,11 +181,11 @@
 
       <div class="body-wrap">
   
-    <article id="post-字典学习和稀疏表示初探——从图像降噪说起" class="article article-type-post" itemscope itemprop="blogPost">
+    <article id="post-浅谈协方差矩阵相关" class="article article-type-post" itemscope itemprop="blogPost">
   
     <div class="article-meta">
-      <a href="/2016/07/19/字典学习和稀疏表示初探——从图像降噪说起/" class="article-date">
-  	<time datetime="2016-07-19T16:21:53.000Z" itemprop="datePublished">2016-07-19</time>
+      <a href="/2016/11/09/浅谈协方差矩阵相关/" class="article-date">
+  	<time datetime="2016-11-09T16:47:00.000Z" itemprop="datePublished">2016-11-09</time>
 </a>
     </div>
   
@@ -198,7 +198,7 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2016/07/19/字典学习和稀疏表示初探——从图像降噪说起/">字典学习和稀疏表示初探——从图像降噪说起</a>
+      <a class="article-title" href="/2016/11/09/浅谈协方差矩阵相关/">浅谈协方差矩阵相关</a>
     </h1>
   
 
@@ -207,10 +207,50 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=default"></script><br>最近在看一篇利用dictionary learning解决基于微小纹理的图像分类问题，就结合scikit-learning库中的一些代码，做了一些相关的简单学习。在自然图像处理领域，稀疏表示和字典学习是一种很重要的方法，它可以对图像进行切块，将这些细小的图像的patch作为训练集，学习得到一个字典，并用这个字典对于新输入的图像进行稀疏的线性近似，最后可以得到一些很好的特性，可以用于图像分类，图像降噪，图像复原等等。下面我会从一个图像降噪的demo入手对于这个算法简单的做一个介绍。</p>
-<div align="center"> <img src="http://o9z29gp6f.bkt.clouddn.com/3_figure_2.png?imageView2/2/w/300" alt="噪声图片"> </div><br>我们现在有一张大小为384*512大小的小浣熊的灰度图。我们将它一分为二，在它的右半部分添加高斯噪声，接下来的工作就是将图像的左边作为训练集，从中学习出一个字典对右半部分做稀疏表示，对右边的图像进行恢复，由于左边没有噪声污染，这样学习出来的字典能够较好的保留原图像中的结构信息，而噪声却不能很好的被表示，从而达到降噪的效果。<br>用数学语言来建模就是这样一个公式$$f(x)={1 \over 2}||x-y||_2^2$$<br>首先，我们把作为训练集的无噪声的图片左半部分切成7*7的小块，然后将每一块拉直成49*1的初始signal，并对它做归一化处理，使每个signal的模都为1,这里实际我们会得到一个有一千多个元素的训练集，每个元素都是一个49维的列向量。利scikit-learning提供的<code>sklearn.decomposition.MiniBatchDictionaryLearning</code>这个类，我们可以学习到一个字典<code>V</code>这个字典的原子数为100,每个原子的维度为49,最大迭代次数为500,具体的代码如下。<br><br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">print(<span class="string">'Extracting reference patches...'</span>)</span><br><span class="line">t0 = time()</span><br><span class="line">patch_size = (<span class="number">7</span>, <span class="number">7</span>)</span><br><span class="line">data = extract_patches_2d(distorted[:, :width // <span class="number">2</span>], patch_size)</span><br><span class="line">data = data.reshape(data.shape[<span class="number">0</span>], <span class="number">-1</span>)</span><br><span class="line">data -= np.mean(data, axis=<span class="number">0</span>)</span><br><span class="line">data /= np.std(data, axis=<span class="number">0</span>)</span><br><span class="line">print(<span class="string">'done in %.2fs.'</span> % (time() - t0))</span><br><span class="line"> </span><br><span class="line"><span class="comment">###############################################################################</span></span><br><span class="line"><span class="comment"># Learn the dictionary from reference patches</span></span><br><span class="line"></span><br><span class="line">print(<span class="string">'Learning the dictionary...'</span>)</span><br><span class="line">t0 = time()</span><br><span class="line">dico = MiniBatchDictionaryLearning(n_components=<span class="number">100</span>, alpha=<span class="number">1</span>, n_iter=<span class="number">500</span>)</span><br><span class="line">V = dico.fit(data).components_</span><br><span class="line">dt = time() - t0</span><br><span class="line">print(<span class="string">'done in %.2fs.'</span> % dt)</span><br></pre></td></tr></table></figure><br><br>上面的工作我把它理解为字典学习的部分，就是从训练样本中学习一个满秩的过完备的字典，具体这个字典是怎么得到的，我们会在下面再说，剩下的一部分操作我把它理解为稀疏表示的部分也就是说如何用已知的这个满秩的字典来误差尽可能小的，稀疏度尽可能小的来重构我们新的信号。同样的，接下来我们将图片右半部分有噪声的部分同样进行切块操作然后将它标准化处理为一个n*49大小的测试集矩阵，这里的n为切块个数。我们只要用这个字典V来表示这些测试集矩阵中的每个列向量,然后将这些reconstruct的测试集逆标准化处理之后重新拼回原图中，就可以得到我们降噪的结果，代码如下。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">transform_algorithms = [</span><br><span class="line">    (<span class="string">'Orthogonal Matching Pursuit\n1 atom'</span>, <span class="string">'omp'</span>,</span><br><span class="line">     &#123;<span class="string">'transform_n_nonzero_coefs'</span>: <span class="number">1</span>&#125;),</span><br><span class="line">    (<span class="string">'Orthogonal Matching Pursuit\n2 atoms'</span>, <span class="string">'omp'</span>,</span><br><span class="line">     &#123;<span class="string">'transform_n_nonzero_coefs'</span>: <span class="number">2</span>&#125;),</span><br><span class="line">    (<span class="string">'Least-angle regression\n5 atoms'</span>, <span class="string">'lars'</span>,</span><br><span class="line">     &#123;<span class="string">'transform_n_nonzero_coefs'</span>: <span class="number">5</span>&#125;),</span><br><span class="line">    (<span class="string">'Thresholding\n alpha=0.1'</span>, <span class="string">'threshold'</span>, &#123;<span class="string">'transform_alpha'</span>: <span class="number">.1</span>&#125;)]</span><br><span class="line"></span><br><span class="line">reconstructions = &#123;&#125;</span><br><span class="line"><span class="keyword">for</span> title, transform_algorithm, kwargs <span class="keyword">in</span> transform_algorithms:</span><br><span class="line">    print(title + <span class="string">'...'</span>)</span><br><span class="line">    reconstructions[title] = face.copy()</span><br><span class="line">    t0 = time()</span><br><span class="line">    dico.set_params(transform_algorithm=transform_algorithm, **kwargs)</span><br><span class="line">    code = dico.transform(data)</span><br><span class="line">    patches = np.dot(code, V)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> transform_algorithm == <span class="string">'threshold'</span>:</span><br><span class="line">        patches -= patches.min()</span><br><span class="line">        patches /= patches.max()</span><br><span class="line"></span><br><span class="line">    patches += intercept</span><br><span class="line">    patches = patches.reshape(len(data), *patch_size)</span><br><span class="line">    <span class="keyword">if</span> transform_algorithm == <span class="string">'threshold'</span>:</span><br><span class="line">        patches -= patches.min()</span><br><span class="line">        patches /= patches.max()</span><br><span class="line">    reconstructions[title][:, width // <span class="number">2</span>:] = reconstruct_from_patches_2d(</span><br><span class="line">        patches, (height, width // <span class="number">2</span>))</span><br></pre></td></tr></table></figure><br><br>这里用了稀疏度为1,2的OMP方法，还有lars，阈值的一些方法来解决稀疏表示的问题，下面我也会对OMP做一个简单的介绍以下的降噪的一些结果。<br><div align="center"> <img src="http://o9z29gp6f.bkt.clouddn.com/3_result.png?imageView2/2/w/600" alt="噪声图片"> </div>
+        <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=default"></script>
 
-
+<p>最近在实现除雨的过程中使用到了马氏距离的东西，在这其中遇到了一些问题，所以更新一篇有关马氏距离和协方差矩阵相关的内容，我会尽量用最简单的语言结合自己的理解来讲清楚这一系列问题。</p>
+<h2 id="协方差矩阵"><a href="#协方差矩阵" class="headerlink" title="协方差矩阵"></a>协方差矩阵</h2><p>首先我们说一下什么是协方差，我们高中都学过方差，标准差这些，但是这些量都是计算单个随机变量的波动性，譬如一个班级语文成绩的方差，可能表示一个班级的两极分化程度，一个学生各个学科成绩的方差，可能表示他的偏科程度。我们这里说的协方差，是一个衡量两个随机变量之间联系的一个统计值,譬如一个班级数学成绩和物理成绩的协方差，表示数学这门学科和物理这门学科的相关性。我和我同桌小考成绩的协方差，很可能具有某种神秘的相关性，而表现出一个正值。先给出公式:<br>\[ cov(x,y) = E((x-E(x))(y-E(y)))\]
+这种形式不太容易理解，可以把这个公式变形为另一个形式：
+\[cov(x,y) = E(x・y)-E(x)E(y)\]
+可以看出两个随机变量的协方差实际上就是它们的內积减去它们的平均值，事实上，两个向量的內积就是一个向量在另一个向量方向上的投影：
+\[x \bullet y = |x||y|cos(\alpha)\]
+这个$cos \alpha $所以我们现在可以很形象的理解,两个向量夹角越小，必然越相似，其实就是两个随机变量相似性越大，即协方差越大，如果两个随机变量是同一个随机变量，其实计算他们的协方差就是在计算他们的方差。</p>
+<p>回到协方差矩阵上，如果一个高中生学习了10门课程，统计全班所有学生的成绩可以构成一个n*10的矩阵$X$,$ X=(X_1,X_2,…,X_{10})$每一个列向量$ X_i $代表一门学科成绩的随机变量，我们把每两门学科成绩都相互计算一下协方差，就能构成一个协方差矩阵。
+\[ C = \left (\begin{matrix}
+cov(X_1,X_1)&cov(X_1,X_2)&…&cov(X_1,X_{10}) \\
+cov(X_2,X_1)&cov(X_2,X_2)&…&cov(X_2,X_{10}) \\
+… \\
+cov(X_{i-1},X_1)&cov(X_{i-1},X_2)&…&cov(X_{i-1},X_i) \\
+… \\
+cov(X_{10},X_1)&cov(X_{10},X_2)&…&cov(X_{10},X_{10}) \\
+\end{matrix} \right) \]</p>
+协方差矩阵中的$c_{i,j}$就表示第i个特征跟第j个特征的协方差，特别的是它的对角线$c_{i,i}$其实表示的是第i个特征的方差。
+<h2 id="马氏距离"><a href="#马氏距离" class="headerlink" title="马氏距离"></a>马氏距离</h2><p>马氏距离由印度数学家马哈拉诺比斯(Mahalanobis)首先提出，所以又称为Mahalanobis Distance,是一种采样协方差来计算两点之间距离的方法。他的公式如下:
+\[d_m(u,v) = \sqrt{(u-v)^T \Sigma^{-1} (u-v) }\]
+这里的$\Sigma$ 是协方差矩阵,u,v是两个样本点，不是样本集的某两列特征。
+<br>我们可以看到在计算马氏距离的时候用到了协方差矩阵的逆，从上述协方差矩阵的介绍中可以看出，因为协方差本身是一种计算两个随机变量之间相关性的值，所以马氏距离是建立在总体样本基础上的一种运算，两个点在不同的总体中，他的马氏距离是不同的。另外，如果这个协方差矩阵的逆是一个单位矩阵，马氏距离等于欧氏距离。</p>
+<p>这里的协方差矩阵的逆，实际上是总体样本的协方差矩阵的逆，并不是两个待比较的样本之间的协方差矩阵,如果总体样本数小于样本的维数，很容易算出样本的协方差矩阵为奇异矩阵，并没有逆（..就是被坑在这里了，对两个36维的hog特征计算马氏距离，如果不代入总样本计算协方差矩阵，对两个样本计算得到的协方差矩阵一定是奇异的）。</p>
+<p>以上的关于马氏距离的描述有点抽象，我从我的理解来简单解释一下马氏距离的思想，举个不恰当的例子来说，A学生的物理，数学，语文成绩分别是（90, 90, 60），现在B学生的三门成绩为（100,100,60），C学生的三门成绩为（90,90,71），如果直接用欧式距离来计算他们之间的相似程度，我们可以得到A和C之间的欧式距离更小，他们之间的相似度更高，可是如果我们拿到整个班级的三门课成绩，并对计算他们总体的协方差矩阵，可能会发现，全班的物理成绩和数学成绩的协方差很大，具有一定的线性关系，直接对学生的三门课成绩进行欧式距离的计算，笼统的来说，意味着对所谓的“物理，数学”成绩的影响实际上是重复的，但是被放大了。</p>
+<p>在网上也看过一部分资料，解释所谓的马氏距离，是对特征向量进行了特征空间的变化，从欧式空间变换到了马氏空间，那么我就顺着这个简单说一下协方差矩阵是怎么做的PCA降维的。</p>
+<h2 id="PCA降维"><a href="#PCA降维" class="headerlink" title="PCA降维"></a>PCA降维</h2><p>网上关于PCA降维的介绍很多，我这里只简单介绍一下我所理解的PCA降维。</p>
+<p>如果我们现在有一个n维的特征向量的样本，可以计算出他的协方差矩阵C，则C是一个n*n的矩阵。<br>上面说到两个随机变量协方差计算的公式的內积形式是:
+\[cov(x,y) = E(xy) - E(x)E(y)\]
+\[cov(x,y) = x^T・y - E(x)E(y)\]
+我们如果找到一个标准正交基U对x,y进行转换向量空间，我们知道转换向量空间是不会改变向量长度的，所以公式后一项$E(x)E(y)$是不会改变的（实际上如果我们假定我们对特征值x,y做了标准化预处理，则这一项为0）。
+\[cov(xU,yU) = (xU)^T・yU - E(x)E(y)\]
+\[cov(xU,yU) = U^Tx^T・yU - E(x)E(y)\]
+我们对C进行SVD分解得到:
+\[C = USV\]<br>其中的U和V都是一个酉阵，也就是一组标准正交基，其实就相当于对我们初始的样本x,y进行了向量空间的转换，S是一个对角阵，除了对角线，其他位置都为0，对角线的所有元素都为C阵的特征值，这一部分内容感兴趣的可以自己参考数值分析的SVD分解部分。我用自己的话来解释一波这个SVD操作，将我们初始的样本进行向量空间转换，由于新的协方差矩阵S除了对角线的方差位，其他协方差位都为0，而且对角线元素越往下越小，也就是说对原来的样本进行换基操作之后，每一维的特征彼此都不再相关，越靠后的特征方差越小（这里我们可以理解为，方差越小包含的信息越少，譬如方差为0，大家这个特征都相等，没有差异性）。然后我们选取酉阵U的前K个向量组成新线性空间的一组基向量，来描述原来的n维特征，也就是把特征数从n维降到了k维，这里舍弃的n-k维，新协方差矩阵中的后n-k维对角线上特征值比较小的特征。</p>
+<p>用一句话来总结一下，就是对原来的n维特征做基变换，使n维特征相互间的协方差很小，也就是说特征之间不包含联系，然后我们忽略那些方差比较小的n-k维特征，让原来的n维特征降维到k维特征，对这部分感兴趣的同学可以去看一下底下相关链接[3]，PCA原理，他从基本的向量基变换开始讲起说的很清讲楚。</p>
+<blockquote>
+<p>相关知识:</p>
+<ol>
+<li><a href="http://blog.csdn.net/ybdesire/article/details/6270328/" target="_blank" rel="external">详解协方差及协方差矩阵</a></li>
+<li><a href="http://www.cnblogs.com/likai198981/p/3167928.html" target="_blank" rel="external">马氏距离的深入理解</a></li>
+<li><a href="http://blog.csdn.net/xiaojidan2011/article/details/11595869" target="_blank" rel="external">PCA的数学原理</a></li>
+</ol>
+</blockquote>
 
       
     </div>
@@ -219,7 +259,7 @@
       
       
 	<div class="article-tag tagcloud">
-		<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/图像处理/">图像处理</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/机器学习/">机器学习</a></li></ul>
+		<ul class="article-tag-list"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/图像处理/">图像处理</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/数值分析/">数值分析</a></li><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/机器学习/">机器学习</a></li></ul>
 	</div>
 
       
